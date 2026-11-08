@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Журнал АГЗС · УЗГС-01</title>
+<style>
+  :root {
+    --paper: #e7e1d4;
+    --sheet: #f7f3ea;
+    --ink: #1c1915;
+    --muted: #5e584e;
+    --line: #d3c9b6;
+    --header: #1d2a26;
+    --header-ink: #f3eee4;
+    --amber: #9a6410;
+    --alarm: #8c2230;
+    --warn: #8a5610;
+    --ok: #1c6844;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 16px/1.45 "Segoe UI", "PT Sans", sans-serif;
+  }
+  header, main { width: min(1180px, calc(100% - 32px)); margin: 0 auto; }
+  header {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 28px 0 18px;
+  }
+  .kicker { margin: 0 0 4px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; font-size: 12px; }
+  h1 { margin: 0; font: 34px/1.1 Georgia, "Times New Roman", serif; font-weight: normal; }
+  .status {
+    min-width: 240px;
+    background: var(--header);
+    color: var(--header-ink);
+    padding: 14px 16px;
+  }
+  .status b { display: block; font-size: 18px; font-weight: 600; }
+  .status span { color: #d9d0c2; font-size: 14px; }
+  .banner {
+    width: min(1180px, calc(100% - 32px));
+    margin: 0 auto 18px;
+    padding: 12px 14px;
+    background: #f3e7cb;
+    border-left: 4px solid var(--amber);
+  }
+  nav { display: flex; gap: 18px; border-bottom: 1px solid var(--line); margin-bottom: 16px; }
+  nav button {
+    background: none;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    padding: 8px 0 10px;
+    font: inherit;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  nav button.on { color: var(--ink); border-color: var(--amber); }
+  .bar, .desk { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: end; margin-bottom: 12px; }
+  label { display: grid; gap: 4px; color: var(--muted); font-size: 13px; }
+  select, input, button.act {
+    font: inherit;
+    color: var(--ink);
+    background: var(--sheet);
+    border: 1px solid var(--line);
+    height: 36px;
+    padding: 0 10px;
+  }
+  button.act { background: var(--header); color: var(--header-ink); cursor: pointer; }
+  .sum { margin: 0 0 12px; font-size: 18px; }
+  .sum b { font-variant-numeric: tabular-nums; }
+  .tablewrap { overflow-x: auto; background: var(--sheet); border: 1px solid var(--line); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: 0.03em; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; font-family: ui-monospace, "Cascadia Mono", monospace; font-size: 13px; }
+  tr.alarm td { color: var(--alarm); }
+  tr.warning td { color: var(--warn); }
+  .links { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 16px; }
+  .links a { color: var(--header); padding: 6px 0; }
+  .err { color: var(--alarm); min-height: 1.2em; }
+  .facts { display: grid; gap: 22px; }
+  .facts h2 { font: 26px/1.2 Georgia, serif; font-weight: normal; margin: 0 0 8px; }
+  article { padding: 10px 0; border-top: 1px solid var(--line); }
+  article h3 { margin: 0 0 4px; font-size: 16px; }
+  article p { margin: 0; }
+  .journal-note { color: var(--muted); margin-top: 4px; }
+  #tab-sales[hidden], #tab-device[hidden], #tab-log[hidden] { display: none; }
+  @media (max-width: 720px) {
+    header { flex-direction: column; }
+    h1 { font-size: 28px; }
+    .status { min-width: 0; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <p class="kicker" id="kicker">АГЗС</p>
+    <h1>Журнал событий и продажи</h1>
+  </div>
+  <div class="status" id="status"></div>
+</header>
+<p class="banner" id="banner"></p>
+<main>
+  <p class="err" id="err"></p>
+  <form class="desk" id="desk">
+    <label>Режим
+      <select id="mode">
+        <option value="liters">литры</option>
+        <option value="amount">сумма, тенге</option>
+        <option value="full">до полного бака</option>
+      </select>
+    </label>
+    <label id="value-label"><span id="value-caption">Литры</span>
+      <input id="value" inputmode="decimal" value="20" required>
+    </label>
+    <label>Оплата
+      <select id="pay"></select>
+    </label>
+    <button class="act" type="submit" id="go">Провести заправку</button>
+  </form>
+  <nav>
+    <button type="button" class="on" data-tab="log">Журнал</button>
+    <button type="button" data-tab="sales">Продажи</button>
+    <button type="button" data-tab="device">Что отдаёт УЗГС-01</button>
+  </nav>
+  <section id="tab-log">
+    <div class="bar">
+      <label>Смена
+        <select id="shift"></select>
+      </label>
+      <label>Категория
+        <select id="cat"><option value="">все</option></select>
+      </label>
+      <label>Важность
+        <select id="sev">
+          <option value="">все</option>
+          <option value="alarm">авария</option>
+          <option value="warning">предупреждение</option>
+          <option value="info">обычные</option>
+        </select>
+      </label>
+      <label>Поиск
+        <input id="q" placeholder="клапан, сумма, 06">
+      </label>
+    </div>
+    <p class="sum" id="log-sum"></p>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Время</th><th>Категория</th><th>Событие</th><th class="num">Продажа</th><th>Откуда</th>
+          </tr>
+        </thead>
+        <tbody id="log-body"></tbody>
+      </table>
+    </div>
+  </section>
+  <section id="tab-sales" hidden>
+    <p class="sum" id="sale-sum"></p>
+    <div class="links" id="exports"></div>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="num">№</th><th>Начало</th><th>Режим</th>
+            <th class="num">Заказано, л</th><th class="num">Отпущено, л</th>
+            <th class="num">Сумма, тенге</th><th>Останов</th><th>Оплата</th>
+            <th class="num">Суммарник, л</th>
+          </tr>
+        </thead>
+        <tbody id="sale-body"></tbody>
+      </table>
+    </div>
+  </section>
+  <section id="tab-device" hidden>
+    <div class="facts" id="facts"></div>
+  </section>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+let boot = null;
+let view = null;
+let facts = [];
+
+function cell(text, cls) {
+  const td = document.createElement("td");
+  td.textContent = text == null || text === "" ? "—" : String(text);
+  if (cls) td.className = cls;
+  return td;
+}
+
+async function api(path, options) {
+  const response = await fetch(path, options);
+  const type = response.headers.get("content-type") || "";
+  const payload = type.includes("json") ? await response.json() : await response.text();
+  if (!response.ok) throw new Error(payload.error || "запрос не прошёл");
+  return payload;
+}
+
+function post(path, body) {
+  return api(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-AGZS": "1" },
+    body: JSON.stringify(body),
+  });
+}
+
+function say(error) {
+  $("err").textContent = error ? String(error.message || error) : "";
+}
+
+function renderStatus() {
+  $("kicker").textContent = "АГЗС · колонка " + boot.column_no + " · УЗГС-01";
+  $("banner").textContent = boot.banner;
+  $("status").replaceChildren();
+  const title = document.createElement("b");
+  title.textContent = boot.status_text;
+  const meta = document.createElement("span");
+  const open = boot.open_shift ? "открыта смена " + boot.open_shift : "смена закрыта";
+  meta.textContent = boot.price + " тенге/л · суммарник " + boot.accounted + " л · " + open;
+  $("status").append(title, document.createElement("br"), meta);
+  $("go").disabled = boot.phase !== "idle" || !boot.open_shift;
+}
+
+function fillShifts() {
+  const select = $("shift");
+  const current = select.value;
+  select.replaceChildren();
+  boot.shifts.forEach((shift) => {
+    const option = document.createElement("option");
+    option.value = String(shift.number);
+    option.textContent = "смена " + shift.number + " · " + shift.status + " · " + shift.receipts + " чек.";
+    select.append(option);
+  });
+  const preferred = boot.shifts.slice().sort((a, b) => b.receipts - a.receipts)[0];
+  select.value = current || (preferred ? String(preferred.number) : "");
+}
+
+function renderPayments() {
+  const select = $("pay");
+  if (select.options.length) return;
+  boot.payments.forEach((item) => {
+    const option = document.createElement("option");
+    option.value = item.code;
+    option.textContent = item.label;
+    select.append(option);
+  });
+  select.value = "unknown";
+}
+
+function selectedNumber() {
+  return $("shift").value;
+}
+
+function renderLog() {
+  const cat = $("cat").value;
+  const sev = $("sev").value;
+  const query = $("q").value.trim().toLowerCase();
+  const categories = new Set(view.events.map((item) => item.category));
+  const known = new Set(Array.from($("cat").options).map((option) => option.value));
+  categories.forEach((name) => {
+    if (known.has(name)) return;
+    const option = document.createElement("option");
+    option.value = name;
+    option.textContent = name;
+    $("cat").append(option);
+  });
+  const rows = view.events.filter((item) => {
+    if (cat && item.category !== cat) return false;
+    if (sev && item.severity !== sev) return false;
+    if (query && !item.message.toLowerCase().includes(query)) return false;
+    return true;
+  });
+  $("log-sum").textContent = "Смена " + view.number + " · " + view.status
+    + " · " + rows.length + " из " + view.summary.events + " строк · аварий: " + view.summary.alarms;
+  const body = $("log-body");
+  body.replaceChildren();
+  rows.forEach((item) => {
+    const tr = document.createElement("tr");
+    if (item.severity === "alarm" || item.severity === "warning") tr.className = item.severity;
+    tr.append(
+      cell(item.time),
+      cell(item.category),
+      cell(item.message),
+      cell(item.sale_id || "", "num"),
+      cell(item.source)
+    );
+    body.append(tr);
+  });
+}
+
+function renderSales() {
+  const summary = view.summary;
+  const bits = [
+    "Смена " + view.number,
+    summary.receipts + " чеков",
+    summary.liters + " л",
+    summary.amount + " тенге",
+  ];
+  summary.payments.forEach((item) => {
+    bits.push(item.label + " " + item.count + " / " + item.amount);
+  });
+  $("sale-sum").textContent = bits.join(" · ");
+  const number = view.number;
+  const links = $("exports");
+  links.replaceChildren();
+  [
+    ["/api/export/sales.csv?number=" + number, "Продажи, CSV"],
+    ["/api/export/sales.json?number=" + number, "Продажи, JSON"],
+    ["/api/export/events.csv?number=" + number, "Журнал, CSV"],
+    ["/api/export/events.txt?number=" + number, "Журнал, текст"],
+  ].forEach(([href, label]) => {
+    const link = document.createElement("a");
+    link.href = href;
+    link.textContent = label;
+    links.append(link);
+  });
+  const body = $("sale-body");
+  body.replaceChildren();
+  view.sales.forEach((sale) => {
+    const tr = document.createElement("tr");
+    if (sale.stop_reason === "авария") tr.className = "alarm";
+    const pay = document.createElement("td");
+    const select = document.createElement("select");
+    boot.payments.forEach((item) => {
+      const option = document.createElement("option");
+      option.value = item.code;
+      option.textContent = item.label;
+      select.append(option);
+    });
+    select.value = sale.payment;
+    select.addEventListener("change", async () => {
+      try {
+        say("");
+        boot = await post("/api/payment", { sale_id: sale.id, payment: select.value });
+        renderStatus();
+        await loadShift(number);
+      } catch (error) {
+        say(error);
+      }
+    });
+    pay.append(select);
+    tr.append(
+      cell(sale.id, "num"),
+      cell(sale.started),
+      cell(sale.mode),
+      cell(sale.ordered, "num"),
+      cell(sale.dispensed, "num"),
+      cell(sale.amount, "num"),
+      cell(sale.stop_reason),
+      pay,
+      cell(sale.before + " → " + sale.after, "num")
+    );
+    body.append(tr);
+  });
+}
+
+function renderFacts() {
+  const root = $("facts");
+  root.replaceChildren();
+  let last = "";
+  facts.forEach((item) => {
+    if (item.group_title !== last) {
+      last = item.group_title;
+      const heading = document.createElement("h2");
+      heading.textContent = item.group_title;
+      root.append(heading);
+    }
+    const article = document.createElement("article");
+    const title = document.createElement("h3");
+    title.textContent = item.title;
+    const detail = document.createElement("p");
+    detail.textContent = item.detail;
+    const note = document.createElement("p");
+    note.className = "journal-note";
+    note.textContent = "В журнале: " + item.journal;
+    article.append(title, detail, note);
+    root.append(article);
+  });
+}
+
+async function loadShift(number) {
+  view = await api("/api/shift?number=" + number);
+  $("shift").value = String(number);
+  renderLog();
+  renderSales();
+}
+
+function show(tab) {
+  ["log", "sales", "device"].forEach((name) => {
+    $("tab-" + name).hidden = name !== tab;
+  });
+  document.querySelectorAll("nav button").forEach((button) => {
+    button.classList.toggle("on", button.dataset.tab === tab);
+  });
+}
+
+$("mode").addEventListener("change", () => {
+  const mode = $("mode").value;
+  $("value-caption").textContent = mode === "amount"
+    ? "Сумма, тенге"
+    : mode === "full"
+      ? "Литры до отсечки"
+      : "Литры";
+});
+
+$("desk").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try {
+    say("");
+    boot = await post("/api/fill", {
+      mode: $("mode").value,
+      value: $("value").value,
+      payment: $("pay").value,
+    });
+    fillShifts();
+    renderStatus();
+    await loadShift(String(boot.open_shift));
+    show("sales");
+  } catch (error) {
+    say(error);
+  }
+});
+
+["shift", "cat", "sev", "q"].forEach((id) => {
+  $(id).addEventListener("input", () => {
+    if (id === "shift") {
+      loadShift($("shift").value).catch(say);
+      return;
+    }
+    renderLog();
+  });
+});
+
+document.querySelectorAll("nav button").forEach((button) => {
+  button.addEventListener("click", () => show(button.dataset.tab));
+});
+
+async function start() {
+  try {
+    const loaded = await Promise.all([api("/api/bootstrap"), api("/api/capabilities")]);
+    boot = loaded[0];
+    facts = loaded[1].facts;
+    renderStatus();
+    renderPayments();
+    fillShifts();
+    renderFacts();
+    await loadShift(selectedNumber());
+  } catch (error) {
+    say(error);
+  }
+}
+
+start();
+</script>
+</body>
+</html>
