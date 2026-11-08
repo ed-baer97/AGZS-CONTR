@@ -1,8 +1,5 @@
 from pathlib import Path
 
-import pytest
-
-from agzs_station.errors import EmulatorNotReady
 from agzs_station.pumps.adapters.emulator import EmulatorAdapter
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -16,8 +13,7 @@ def test_emulator_has_no_hardware_channel() -> None:
         assert token not in lowered
     adapter = EmulatorAdapter()
     assert not hasattr(adapter, "port")
-    with pytest.raises(EmulatorNotReady):
-        adapter.probe()
+    assert adapter.probe().up is True
 
 
 def test_aska_placeholder_has_no_protocol_bytes() -> None:

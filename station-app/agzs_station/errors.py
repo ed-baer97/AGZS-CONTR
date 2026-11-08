@@ -13,5 +13,5 @@ class ExchangeNotPermitted(Exception):
     """Обмен с АСКА-02 ещё не допущен."""
 
 
-class EmulatorNotReady(Exception):
-    """Виртуальные колонки подключаются на этапе 3 и не открывают оборудование."""
+class UnknownPumpAddress(Exception):
+    """В модели эмулятора нет колонки с таким адресом."""
