@@ -382,7 +382,8 @@ def test_illegal_transition_is_rejected_without_changing_the_column(tmp_path: Pa
 
 
 def test_column_window_names_the_counter() -> None:
-    source = Path(__file__).resolve().parents[2] / "station-app" / "agzs_station" / "ui" / "window.py"
-    text = source.read_text(encoding="utf-8")
+    root = Path(__file__).resolve().parents[2] / "station-app" / "agzs_station" / "ui"
+    text = "\n".join(path.read_text(encoding="utf-8") for path in root.glob("*.py")).casefold()
     assert "счётчик" in text
     assert "доза" in text
+    assert "пуск" in text
