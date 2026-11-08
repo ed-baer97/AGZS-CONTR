@@ -1,0 +1,4 @@
+-e ./shared
+-e ./station-app
+-e ./central-server
+pytest>=8.3
