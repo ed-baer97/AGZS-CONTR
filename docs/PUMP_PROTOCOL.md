@@ -64,6 +64,8 @@ stateDiagram-v2
   DISPENSING --> ERROR: авария при известном состоянии
   COMPLETED --> IDLE: результат записан
   STOPPED --> IDLE: результат записан
+  COMPLETED --> ERROR: факт дороже предоплаты
+  STOPPED --> ERROR: факт дороже предоплаты
   IDLE --> MAINTENANCE: решение техника
   ERROR --> MAINTENANCE: решение техника
   MAINTENANCE --> IDLE: колонка возвращена в работу

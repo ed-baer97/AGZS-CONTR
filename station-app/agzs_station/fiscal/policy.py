@@ -12,5 +12,10 @@ class DenyAllFiscalPolicy:
 
     policy_id = "DENY_ALL"
 
-    def evaluate(self) -> GateDecision:
+    def evaluate(self, sale: object | None = None) -> GateDecision:
+        del sale
         return GateDecision(allowed=False, reason="Фискальная политика не утверждена")
+
+    def steps_for(self, sale: object | None = None, moment: str = "") -> tuple[str, ...]:
+        del sale, moment
+        return ()

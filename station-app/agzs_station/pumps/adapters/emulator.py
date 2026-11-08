@@ -168,7 +168,14 @@ class EmulatorAdapter:
             observation_quality=ObservationQuality.CONFIRMED,
         )
 
-    def authorize(self, address: str, command_id: str, amount_kzt: int) -> AdapterResult:
+    def authorize(
+        self,
+        address: str,
+        command_id: str,
+        amount_kzt: int,
+        *,
+        price_kzt_per_liter: int | None = None,
+    ) -> AdapterResult:
         if not isinstance(command_id, str) or not command_id.strip():
             raise ValueError("У допуска должен быть непустой command_id")
         amount = parse_tenge(amount_kzt)
@@ -186,7 +193,10 @@ class EmulatorAdapter:
             or self._status(pump) == PumpStatus.DISPENSING
         ):
             return self._remember(command_id, AdapterOutcome.REJECTED, None, None)
-        target_ml = max_ml_for_prepaid(amount, pump.price_kzt_per_liter)
+        price = pump.price_kzt_per_liter
+        if price_kzt_per_liter is not None:
+            price = parse_tenge(price_kzt_per_liter)
+        target_ml = max_ml_for_prepaid(amount, price)
         if target_ml <= 0:
             return self._remember(command_id, AdapterOutcome.REJECTED, None, None)
         if pump.dose is not None:

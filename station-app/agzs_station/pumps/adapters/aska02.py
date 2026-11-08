@@ -22,8 +22,15 @@ class Aska02Adapter:
         del address
         raise ExchangeNotPermitted(_REFUSAL)
 
-    def authorize(self, address: str, command_id: str, amount_kzt: int) -> AdapterResult:
-        del address, command_id, amount_kzt
+    def authorize(
+        self,
+        address: str,
+        command_id: str,
+        amount_kzt: int,
+        *,
+        price_kzt_per_liter: int | None = None,
+    ) -> AdapterResult:
+        del address, command_id, amount_kzt, price_kzt_per_liter
         raise ExchangeNotPermitted(_REFUSAL)
 
     def read_authorization(self, command_id: str) -> AdapterResult:
