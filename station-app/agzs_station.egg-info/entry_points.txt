@@ -1,0 +1,2 @@
+[console_scripts]
+agzs-station = agzs_station.main:main

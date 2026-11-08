@@ -1,0 +1,14 @@
+Metadata-Version: 2.4
+Name: agzs-server
+Version: 0.3.0
+Summary: Центральный сервер AGZS Control
+Requires-Python: >=3.12
+Requires-Dist: agzs-shared==0.2.0
+Requires-Dist: fastapi>=0.115
+Requires-Dist: uvicorn>=0.32
+Requires-Dist: sqlalchemy>=2.0.36
+Requires-Dist: alembic>=1.14
+Requires-Dist: pydantic>=2.10
+Requires-Dist: argon2-cffi>=23.1
+Requires-Dist: httpx>=0.27
+Requires-Dist: psycopg[binary]>=3.2

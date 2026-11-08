@@ -1,0 +1,13 @@
+Metadata-Version: 2.4
+Name: agzs-station
+Version: 0.3.0
+Summary: Локальная касса AGZS Control
+Requires-Python: >=3.12
+Requires-Dist: agzs-shared==0.2.0
+Requires-Dist: sqlalchemy>=2.0.36
+Requires-Dist: alembic>=1.14.0
+Requires-Dist: pydantic>=2.10
+Requires-Dist: pydantic-settings>=2.6
+Requires-Dist: argon2-cffi>=23.1
+Provides-Extra: ui
+Requires-Dist: PySide6>=6.8; extra == "ui"

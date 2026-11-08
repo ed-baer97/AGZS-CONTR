@@ -1,0 +1,12 @@
+pyproject.toml
+agzs_shared/__init__.py
+agzs_shared/enums.py
+agzs_shared/events.py
+agzs_shared/ids.py
+agzs_shared/integrity.py
+agzs_shared/money.py
+agzs_shared/py.typed
+agzs_shared.egg-info/PKG-INFO
+agzs_shared.egg-info/SOURCES.txt
+agzs_shared.egg-info/dependency_links.txt
+agzs_shared.egg-info/top_level.txt

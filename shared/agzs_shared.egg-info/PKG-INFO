@@ -1,0 +1,5 @@
+Metadata-Version: 2.4
+Name: agzs-shared
+Version: 0.2.0
+Summary: Контракты AGZS Control, общие для кассы и центрального сервера
+Requires-Python: >=3.12
