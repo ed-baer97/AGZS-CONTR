@@ -107,11 +107,12 @@ def run_window(service: CashierService, env: str) -> int:
             try:
                 for pump in service.pumps():
                     self._addresses[pump.pump_id] = pump.address
-                    dose = "" if pump.dose_ml is None else f", {pump.dose_ml} мл"
+                    dose = "" if pump.dose_ml is None else f", доза {pump.dose_ml} мл"
+                    counter = "" if pump.totalizer_ml is None else f", счётчик {pump.totalizer_ml} мл"
                     provisional = "" if pump.provisional_kzt is None else f", примерно {pump.provisional_kzt} тг"
                     self.pumps.addItem(
                         f"{pump.pump_id}|{pump.name}: {pump.status}/{pump.observation_quality}, "
-                        f"{pump.price_kzt_per_liter} тг/л{dose}{provisional}"
+                        f"{pump.price_kzt_per_liter} тг/л{dose}{counter}{provisional}"
                     )
             except Exception as exc:  # noqa: BLE001
                 self.message.setText(str(exc))

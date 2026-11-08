@@ -28,6 +28,7 @@ class PumpView:
     observation_quality: str
     price_kzt_per_liter: int
     dose_ml: int | None
+    totalizer_ml: int | None
     provisional_kzt: int | None
     sale_id: str | None
     payment_status: str | None
