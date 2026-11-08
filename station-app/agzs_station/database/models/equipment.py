@@ -48,6 +48,12 @@ class Link(Base):
     config_json: Mapped[str] = mapped_column(
         Text, nullable=False, default="{}", server_default=text("'{}'")
     )
+    consecutive_failures: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default=text("0")
+    )
+    unavailable: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=text("0")
+    )
 
 
 class Pump(Base):
@@ -82,6 +88,10 @@ class Pump(Base):
         Boolean, nullable=False, default=False, server_default=text("0")
     )
     status_changed_at: Mapped[str] = mapped_column(String(40), nullable=False, default=utc_now)
+    last_totalizer_ml: Mapped[int | None] = mapped_column(Integer)
+    last_dose_ml: Mapped[int | None] = mapped_column(Integer)
+    last_fault_code: Mapped[str | None] = mapped_column(String(64))
+    last_observed_at: Mapped[str | None] = mapped_column(String(40))
 
 
 class PumpEvent(Base):

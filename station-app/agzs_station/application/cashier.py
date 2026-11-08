@@ -490,18 +490,32 @@ class CashierService:
             )
             session.commit()
 
-    def set_maintenance(self, pump_id: str, enabled: bool) -> None:
+    def set_maintenance(self, pump_id: str, enabled: bool) -> str:
         with self._factory() as session:
+            station = _station(session)
             require(session, self.actor_id, PUMP_MAINTAIN)
             pump = session.get(Pump, pump_id)
             if pump is None:
                 raise SaleBlocked("Колонка не найдена")
-            pump.maintenance_latched = enabled
-            if enabled and pump.status in {PumpStatus.IDLE, PumpStatus.ERROR}:
-                self._manager.transition(session, pump, PumpStatus.MAINTENANCE, reason="Техник забрал колонку")
-            if not enabled and pump.status == PumpStatus.MAINTENANCE:
-                self._manager.transition(session, pump, PumpStatus.IDLE, reason="Колонка возвращена в работу")
+            self._manager.set_maintenance(session, pump, enabled)
+            append_audit(
+                session,
+                organization_id=station.organization_id,
+                station_id=station.station_id,
+                actor_user_id=self.actor_id,
+                action="pump.maintenance",
+                object_type="pump",
+                object_id=pump.id,
+                result="latched" if enabled else "released",
+            )
             session.commit()
+            if enabled and pump.status == PumpStatus.MAINTENANCE:
+                return "Колонка отмечена для обслуживания"
+            if enabled:
+                return "Обслуживание отмечено и начнётся, когда переход станет допустим"
+            if pump.status == PumpStatus.IDLE:
+                return "Колонка возвращена из обслуживания"
+            return "Признак обслуживания снят"
 
     def history(self) -> list[SaleView]:
         with self._factory() as session:
@@ -842,7 +856,13 @@ class CashierService:
     def _pump_view(self, session: Session, pump: Pump) -> PumpView:
         sale = session.get(Sale, pump.active_sale_id) if pump.active_sale_id else None
         telemetry = self._manager.telemetry.get(pump.id)
-        dose = None if telemetry is None else telemetry.dose_ml
+        confirmed = pump.observation_quality == ObservationQuality.CONFIRMED
+        dose = pump.last_dose_ml if confirmed else None
+        totalizer = pump.last_totalizer_ml if confirmed else None
+        if confirmed and telemetry is not None and telemetry.observation_quality == ObservationQuality.CONFIRMED:
+            dose = telemetry.dose_ml
+            if telemetry.totalizer_ml is not None:
+                totalizer = telemetry.totalizer_ml
         provisional = None
         if dose is not None and sale is not None and sale.rounding_policy_id == TEST_HALF_UP:
             provisional = actual_kzt(dose, sale.unit_price_kzt_per_liter, TEST_HALF_UP)
@@ -854,6 +874,7 @@ class CashierService:
             observation_quality=pump.observation_quality,
             price_kzt_per_liter=pump.price_kzt_per_liter,
             dose_ml=dose,
+            totalizer_ml=totalizer,
             provisional_kzt=provisional,
             sale_id=None if sale is None else sale.id,
             payment_status=None if sale is None else sale.payment_status,
