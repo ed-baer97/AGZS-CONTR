@@ -14,6 +14,13 @@ class PumpPort(Protocol):
 
     def read_totalizer(self, address: str) -> TotalizerReading: ...
 
-    def authorize(self, address: str, command_id: str, amount_kzt: int) -> AdapterResult: ...
+    def authorize(
+        self,
+        address: str,
+        command_id: str,
+        amount_kzt: int,
+        *,
+        price_kzt_per_liter: int | None = None,
+    ) -> AdapterResult: ...
 
     def read_authorization(self, command_id: str) -> AdapterResult: ...

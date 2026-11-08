@@ -16,6 +16,9 @@ class AppContext:
     payment_port_name: str
     fiscal_policy_id: str
     pump_control_enabled: bool
+    pump: object
+    payment: object
+    fiscal: object
 
 
 def wire(settings: Settings) -> AppContext:
@@ -32,4 +35,7 @@ def wire(settings: Settings) -> AppContext:
         payment_port_name=payment.name,
         fiscal_policy_id=fiscal.policy_id,
         pump_control_enabled=pump.supports_control,
+        pump=pump,
+        payment=payment,
+        fiscal=fiscal,
     )

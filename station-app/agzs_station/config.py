@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     pump_driver: str = Field(default="aska02", alias="AGZS_PUMP_DRIVER")
     database_url: str = Field(default="", alias="AGZS_DATABASE_URL")
     keyring_service_name: str = Field(default="agzs-control", alias="AGZS_KEYRING_SERVICE_NAME")
+    bootstrap_password: str = Field(default="", alias="AGZS_BOOTSTRAP_PASSWORD")
 
     @field_validator("env", mode="before")
     @classmethod
@@ -63,7 +64,13 @@ class Settings(BaseSettings):
             raise ValueError("AGZS_LOG_LEVEL должен быть уровнем logging")
         return text
 
-    @field_validator("central_base_url", "database_url", "keyring_service_name", mode="before")
+    @field_validator(
+        "central_base_url",
+        "database_url",
+        "keyring_service_name",
+        "bootstrap_password",
+        mode="before",
+    )
     @classmethod
     def strip_text(cls, value: object) -> str:
         if value is None:

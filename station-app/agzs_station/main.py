@@ -1,4 +1,4 @@
-"""Точка входа кассы. На этапе 2 готовит базу и профиль, без окна и без оборудования."""
+"""Точка входа кассы. Окно подключается флагом --ui и не говорит с колонкой напрямую."""
 
 import logging
 import sys
@@ -16,16 +16,33 @@ def bootstrap(settings: Settings) -> AppContext:
     settings.data_dir.mkdir(parents=True, exist_ok=True)
     upgrade_database(settings.sqlite_url())
     context = build(settings)
-    logging.getLogger("agzs").info("Каркас кассы готов, интерфейс ещё не подключён")
+    logging.getLogger("agzs").info("Касса собрана")
     return context
+
+
+def open_service(settings: Settings, context: AppContext):
+    if settings.env == "production":
+        from agzs_station.application.runtime import open_service as open_production
+
+        return open_production(settings, context)
+    from agzs_station.application.runtime_emulator import open_service as open_emulator
+
+    return open_emulator(settings, context)
 
 
 def main() -> int:
     try:
-        bootstrap(Settings())
+        settings = Settings()
+        context = bootstrap(settings)
+        service = open_service(settings, context)
     except ConfigurationError as exc:
         print(str(exc), file=sys.stderr)
         return 2
+    if "--ui" in sys.argv:
+        from agzs_station.ui.window import run_window
+
+        return run_window(service, settings.env)
+    print("Касса готова. Окно кассира: agzs-station --ui")
     return 0
 
 
